@@ -1,37 +1,32 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>The Atrium — Enhanced Visual</title>
-<meta name="description" content="Interactive Atrium with animated spiral, rings, particles; seed nodes; import/export.">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>The Atrium — Vortex</title>
+<meta name="description" content="Interactive Atrium with a moving spiral vortex base and clickable nodes."/>
 <style>
   :root{
-    --panel:#0f1323; --panelB:#1c2240;
-    --ink:#e8ecf3; --muted:#9aa4b5;
-    --pathos:#ff7a93; --logos:#7cc4ff; --ethos:#ffd166; --eidolon:#c39bff; --unknown:#9fb0c3;
+    --ink:#e6ecff; --muted:#8fa1c1; --panel:#0f1323; --panelB:#1c2240;
+    --pathos:#ff7a93; --logos:#78bdff; --ethos:#ffd166; --eidolon:#c39bff; --unknown:#9fb0c3;
   }
   html,body{height:100%}
-  body{margin:0;background:radial-gradient(1400px 900px at 65% 35%,#0f1222 0%,#0b0f1d 60%,#070a13 100%);
-       color:var(--ink);font:14px/1.45 system-ui,Segoe UI,Inter,Roboto,Helvetica,Arial,sans-serif;overflow:hidden}
-  header{position:fixed;top:12px;left:12px;right:12px;display:flex;gap:10px;z-index:10;align-items:center}
-  h1{font-size:16px;margin:0;padding:8px 12px;background:#0f1323cc;border:1px solid var(--panelB);
-     border-radius:12px;backdrop-filter:blur(4px)}
+  body{margin:0;color:var(--ink);font:14px/1.45 system-ui,Segoe UI,Inter,Roboto,Helvetica,Arial,sans-serif;overflow:hidden;
+    background:radial-gradient(1200px 800px at 65% 35%,#0f1222 0%,#0b0f1d 60%,#070a13 100%)}
+  header{position:fixed;top:10px;left:10px;right:10px;z-index:20;display:flex;gap:10px;align-items:center}
+  h1{margin:0;font-size:16px;padding:8px 12px;background:#0f1323cc;border:1px solid var(--panelB);border-radius:12px;backdrop-filter:blur(4px)}
   .legend{display:flex;gap:8px;padding:6px 8px;background:#0f1323cc;border:1px solid var(--panelB);border-radius:12px}
-  .dot{width:10px;height:10px;border-radius:50%}
+  .dot{width:10px;height:10px;border-radius:999px}
   .row{display:flex;gap:8px;align-items:center}
-  .toolbar{margin-left:auto;display:flex;gap:8px}
+  .tools{margin-left:auto;display:flex;gap:8px}
   .btn,select,input[type="search"]{background:#0f1323;border:1px solid var(--panelB);color:var(--ink);border-radius:10px;padding:8px 10px}
   .btn{cursor:pointer}
   canvas{position:fixed;inset:0;display:block}
-  aside{position:fixed;right:12px;top:56px;bottom:12px;width:360px;background:#0f1323f2;border:1px solid var(--panelB);
-        border-radius:16px;padding:14px;overflow:auto;backdrop-filter:blur(6px);z-index:9}
+  aside{position:fixed;right:10px;top:56px;bottom:10px;width:360px;background:#0f1323f2;border:1px solid var(--panelB);border-radius:16px;padding:14px;overflow:auto;backdrop-filter:blur(6px);z-index:15}
   aside[hidden]{display:none}
   .pill{display:inline-block;border:1px solid #2b355f;padding:2px 8px;border-radius:999px;margin-right:6px;color:var(--muted);font-size:12px}
   .kv{margin:8px 0}.kv b{display:block;color:#c7d2fe;font-size:11px;letter-spacing:.2px;text-transform:uppercase}
-  #hint{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);background:#0f1323cc;border:1px solid var(--panelB);
-        border-radius:999px;padding:6px 12px;color:var(--muted);z-index:7}
-  .footer{position:fixed;left:12px;bottom:12px;background:#0f1323cc;border:1px solid var(--panelB);border-radius:12px;padding:6px 10px;color:var(--muted)}
+  #hint{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);background:#0f1323cc;border:1px solid var(--panelB);border-radius:999px;padding:6px 12px;color:var(--muted);z-index:12}
 </style>
 </head>
 <body>
@@ -43,15 +38,15 @@
     <div class="row"><span class="dot" style="background:var(--ethos)"></span><span>Ethos</span></div>
     <div class="row"><span class="dot" style="background:var(--eidolon)"></span><span>Greater Eidolon</span></div>
   </div>
-  <div class="toolbar">
-    <input id="search" type="search" placeholder="Search… (name, text)" />
+  <div class="tools">
+    <input id="search" type="search" placeholder="Search… (name, text)"/>
     <select id="filterZone"><option value="">Any Zone</option><option>Pathos</option><option>Logos</option><option>Ethos</option><option>Greater Eidolon</option><option>Unknown</option></select>
     <button class="btn" id="exportBtn">Export JSON</button>
     <label class="btn" for="importFile">Import JSON<input id="importFile" type="file" accept="application/json" style="display:none"></label>
-    <button class="btn" id="resetBtn" title="Reset to built-in seeds">Reset Seeds</button>
   </div>
 </header>
 <canvas id="bg"></canvas>
+<canvas id="fx"></canvas>
 <canvas id="nodes"></canvas>
 <aside id="pane" hidden>
   <div id="meta" class="pill">Entry</div>
@@ -62,181 +57,118 @@
   <div class="kv"><b>Bio / Notes</b><div id="pBio">—</div></div>
 </aside>
 <div id="hint">Drag to pan • Scroll to zoom • Click a node • Shift-click empty space to recenter</div>
-<div class="footer">Seeds → localStorage → characters.json</div>
 
 <script>
-const STORAGE_KEY = 'atrium_v2';
+// ---- Colors ----
 const COLOR = { Pathos: css('--pathos'), Logos: css('--logos'), Ethos: css('--ethos'), 'Greater Eidolon': css('--eidolon'), Unknown: css('--unknown') };
 
+// ---- Seed data (edit or import) ----
 const SEED = { entries:[
-  E('Robin','Character','Greater Eidolon','Stay Gold — produces controllable gold dust; blink via dust “Chase”; beams; flash; access to Pathos/Logos/Ethos modes via Icarus link.','(Future) Catharsis — identity becomes unshakable; power expresses conviction.','Gift-giver learning real kindness; wants to atone.'),
-  E('Icarus','Greater Eidolon','Ethos','Wings of Freedom — declare freedom from a concept; timer ends with catastrophic backlash proportional to the freedom.','—','Ancient ambition choosing restraint; cursed by Reverse Index.'),
-  E('Azalea','Character','Pathos','Resonant Arsenal — empathically reads emotions and forges weapons; form by Type, properties by Characteristic; power scales with understanding.','Actualized Arsenal','Empath whose compassion is both strength and burden.')
+  E('Robin','Character','Greater Eidolon','Stay Gold — gold dust control; blink to clusters; beams; flash; access to Pathos/Logos/Ethos via Icarus link.','(Future) Identity becomes unshakable; power expresses conviction.','Gift-giver learning real kindness.'),
+  E('Icarus','Greater Eidolon','Ethos','Wings of Freedom — declare freedom from a concept; backlash when timer ends.','—','Ancient ambition choosing restraint; Reverse Index curse.'),
+  E('Azalea','Character','Pathos','Resonant Arsenal — empathically reads emotions and forges weapons; power scales with understanding.','Actualized Arsenal','Compassion as strength and burden.')
 ]};
 
-(async function init(){
-  let DATA = loadLocal();
-  if(!DATA){
-    try{ const r = await fetch('characters.json', {cache:'no-store'}); if(r.ok){ const j=await r.json(); if(j && Array.isArray(j.entries)) DATA=j; } }catch{}
-  }
-  if(!DATA) DATA = SEED;
-  start(DATA);
-})();
-
-function start(DATA){ persist(DATA); build(DATA); wireUI(DATA); }
-
-const bg = document.getElementById('bg'), bctx = bg.getContext('2d');
-const cv = document.getElementById('nodes'), ctx = cv.getContext('2d');
+// ---- Canvases ----
+const bg = document.getElementById('bg'), bctx = bg.getContext('2d');      // soft nebula + concentric rings
+const fx = document.getElementById('fx'), fctx = fx.getContext('2d');      // animated vortex spiral + particles
+const cv = document.getElementById('nodes'), ctx = cv.getContext('2d');    // nodes on top
 let W=innerWidth, H=innerHeight; resize(); addEventListener('resize', resize);
 
-let nodes=[], scale=1, offset={x:W*0.5, y:H*0.5}, dragging=false, last={x:0,y:0}, hover=null, currentDATA=null;
-let particles=[];
+// camera
+let scale=1, offset={x:W*0.5, y:H*0.5}, dragging=false, last={x:0,y:0}, hover=null;
+let DATA = SEED, nodes=[];
 
-function build(DATA){
-  currentDATA = DATA;
-  const R = Math.min(W,H)*0.38;
-  const N = DATA.entries.length;
+// ---- Build nodes placed along the spiral ----
+function build(){
+  const N = DATA.entries.length, a=12, b=0.18; // spiral parameters
   nodes = DATA.entries.map((e,i)=>{
     const t = (N<=1)?0.5:(i/(N-1));
-    const angle = t * Math.PI*5.6 + i*0.28;
-    const r = 60 + t*R;
-    const x = Math.cos(angle)*r, y = Math.sin(angle)*r;
+    const theta = 1.6 + t*8.4;                 // angle range
+    const r = a * Math.exp(b*theta) * 22;      // scale outward
+    const x = r * Math.cos(theta);
+    const y = r * Math.sin(theta);
     const rad = e.type==='Greater Eidolon'? 17 : 13;
-    return { id: e.id || uid(), x, y, r: rad, ref:e, color: COLOR[e.zoneType] || COLOR.Unknown };
-  });
-  const P = 160;
-  particles = Array.from({length:P}, ()=>{
-    const a = Math.random()*Math.PI*2;
-    const rr = 120 + Math.random()*(R+300);
-    return { x: Math.cos(a)*rr, y: Math.sin(a)*rr, r: 0.8+Math.random()*1.8, s: 0.2+Math.random()*0.9 };
+    return { id: uid(), x, y, r:rad, ref:e, color: COLOR[e.zoneType]||COLOR.Unknown };
   });
 }
 
-let t=0;
-(function loop(){ t+=1; drawBG(); draw(); requestAnimationFrame(loop); })();
-
+// ---- Background paint (screen space) ----
 function drawBG(){
   bctx.setTransform(1,0,0,1,0,0);
-  bctx.globalAlpha = 0.22; bctx.fillStyle = '#0b0f1d'; bctx.fillRect(0,0,W,H);
-  orb(bctx, W*0.65 + Math.cos(t*0.003)*60, H*0.4 + Math.sin(t*0.002)*40, Math.min(W,H)*0.48, '#1a2146', '#0b0f1d');
-  orb(bctx, W*0.28, H*0.7, Math.min(W,H)*0.38, '#0f1634', '#070a13');
+  bctx.clearRect(0,0,W,H);
+  // nebula
+  orb(bctx, W*0.68, H*0.40, Math.min(W,H)*0.50, '#141a36', '#080b17');
+  orb(bctx, W*0.25, H*0.68, Math.min(W,H)*0.42, '#0e1430', '#070a13');
+  // concentric rings centered in world origin rendered in screen (for subtle overlay)
+  bctx.translate(W*0.5, H*0.5);
+  const rings = 7; let rr = 120; bctx.globalAlpha=0.12; bctx.strokeStyle='#6f7fb7';
+  for(let i=0;i<rings;i++){ bctx.beginPath(); bctx.arc(0,0,rr,0,Math.PI*2); bctx.stroke(); rr+=110; }
+  bctx.globalAlpha=1;
 }
 
-function draw(){
-  ctx.setTransform(1,0,0,1,0,0);
-  ctx.clearRect(0,0,W,H);
-  ctx.translate(offset.x, offset.y);
-  ctx.scale(scale, scale);
+// ---- Vortex spiral + particles (world space, animated) ----
+let t=0; const particles = Array.from({length:180}, ()=>({x:(Math.random()-0.5)*1600,y:(Math.random()-0.5)*1200,s:0.6+Math.random()*1.2}));
+function drawFX(){
+  fctx.setTransform(1,0,0,1,0,0); fctx.clearRect(0,0,W,H);
+  fctx.translate(offset.x, offset.y); fctx.scale(scale, scale);
+  // spiral path (logarithmic)
+  fctx.lineWidth = 3/scale; const grad = fctx.createLinearGradient(-200,-200,200,200);
+  grad.addColorStop(0,'rgba(190,210,255,0.35)'); grad.addColorStop(1,'rgba(160,180,255,0.12)');
+  fctx.strokeStyle = grad; fctx.beginPath();
+  let a=12,b=0.18; let started=false;
+  for(let ang=0; ang<Math.PI*7.5; ang+=0.10){ const th=ang + t*0.0008; const r=a*Math.exp(b*th)*18; const x=r*Math.cos(th), y=r*Math.sin(th); if(!started){fctx.moveTo(x,y); started=true;} else {fctx.lineTo(x,y);} }
+  fctx.stroke();
+  // falling particles
+  fctx.fillStyle='rgba(200,210,255,0.6)';
+  particles.forEach(p=>{ const px=p.x + Math.cos((p.x+p.y+t*0.03)*0.01)*3*p.s; const py=p.y + (t*0.03%800)*0.2*p.s + Math.sin((p.x-p.y)*0.01)*2*p.s; fctx.globalAlpha = 0.35 + 0.35*Math.sin((p.x*0.3 + t*0.03)*0.5); fctx.beginPath(); fctx.arc(px,py,p.s,0,Math.PI*2); fctx.fill(); });
+}
 
-  // Concentric rings
-  const baseR = 140, rings = 6;
-  for(let i=0;i<rings;i++){
-    const rr = baseR + i*110;
-    ctx.lineWidth = 2/scale;
-    ctx.strokeStyle = `rgba(160,180,240,${0.14 - i*0.014})`;
-    ctx.beginPath(); ctx.arc(0,0,rr,0,Math.PI*2); ctx.stroke();
-  }
-
-  // Bright spiral with glow
-  ctx.save();
-  const glow = ctx.createLinearGradient(-300,-300,300,300);
-  glow.addColorStop(0,'rgba(190,210,255,0.32)');
-  glow.addColorStop(1,'rgba(150,170,255,0.10)');
-  ctx.strokeStyle = glow;
-  ctx.lineWidth = 3/scale;
-  ctx.beginPath();
-  let rr=20;
-  for(let a=0; a<Math.PI*7.6; a+=0.11){
-    const x=Math.cos(a+ t*0.0007)*rr, y=Math.sin(a+ t*0.0007)*rr;
-    a===0?ctx.moveTo(x,y):ctx.lineTo(x,y); rr+=2.8;
-  }
-  ctx.stroke();
-  ctx.restore();
-
-  // Particles
-  ctx.save();
-  ctx.fillStyle = 'rgba(200,210,255,0.7)';
-  particles.forEach(p=>{
-    const px = p.x + Math.cos((p.x+p.y+t*0.02)*0.01)*3*p.s;
-    const py = p.y + Math.sin((p.x-p.y-t*0.018)*0.01)*3*p.s;
-    ctx.globalAlpha = 0.35 + 0.35*Math.sin((p.x*0.3 + t*0.03)*0.5);
-    ctx.beginPath(); ctx.arc(px,py,p.r,0,Math.PI*2); ctx.fill();
-  });
-  ctx.restore();
-
-  // Nodes
+// ---- Nodes ----
+function drawNodes(){
+  ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,W,H);
+  ctx.translate(offset.x, offset.y); ctx.scale(scale, scale);
   nodes.forEach(n=>{
-    const alpha = passFilter(n.ref) ? 1 : 0.12;
-    ctx.save(); ctx.globalAlpha = alpha;
-    circle(n.x, n.y, n.r*2.5, rgba(n.color,0.20), true);
-    circle(n.x, n.y, n.r, rgba(n.color,0.96), true);
-    ctx.lineWidth = (n.ref.type==='Greater Eidolon'? 2.8 : 1.8)/scale;
-    ctx.strokeStyle = rgba('#cbd5e1', 0.68);
-    circle(n.x, n.y, n.r, null, false, true);
-    ctx.fillStyle = 'rgba(8,10,16,.92)'; ctx.font = `${Math.max(9, n.r)}px Inter, system-ui`;
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    const initials = (n.ref.name||'?').split(/\s+/).map(s=>s[0]).join('').slice(0,3).toUpperCase();
-    ctx.fillText(initials, n.x, n.y+0.5);
-    ctx.restore();
+    const show = passFilter(n.ref); ctx.globalAlpha = show?1:0.12; // glow
+    circle(ctx, n.x, n.y, n.r*2.5, rgba(n.color,0.20), true);
+    circle(ctx, n.x, n.y, n.r, rgba(n.color,0.95), true);
+    ctx.lineWidth=(n.ref.type==='Greater Eidolon'?2.8:1.8)/scale; ctx.strokeStyle=rgba('#cbd5e1',0.68); circle(ctx, n.x, n.y, n.r, null, false, true);
+    // initials
+    ctx.fillStyle='rgba(8,10,16,.92)'; ctx.font=`${Math.max(9,n.r)}px Inter, system-ui`; ctx.textAlign='center'; ctx.textBaseline='middle';
+    const initials=(n.ref.name||'?').split(/\s+/).map(s=>s[0]).join('').slice(0,3).toUpperCase(); ctx.fillText(initials, n.x, n.y+0.5);
   });
-
-  if(hover){
-    const vx = hover.x*scale + offset.x, vy = hover.y*scale + offset.y;
-    const text = `${hover.ref.name} — ${hover.ref.zoneType || '—'}`;
-    ctx.setTransform(1,0,0,1,0,0); const pad=8;
-    ctx.font = '12px Inter, system-ui';
-    const w = Math.ceil(ctx.measureText(text).width)+pad*2;
-    const x = Math.min(Math.max(8, vx - w*0.5), W - w - 8), y = Math.max(48, vy - 26);
-    rounded(ctx, x,y,w,22,8, '#0f1323f2', '#1c2240');
-    ctx.fillStyle = '#cbd5e1'; ctx.fillText(text, x+pad, y+15);
-  }
+  // hover tooltip (screen space)
+  if(hover){ const vx=hover.x*scale+offset.x, vy=hover.y*scale+offset.y; const text=`${hover.ref.name} — ${hover.ref.zoneType||'—'}`; ctx.setTransform(1,0,0,1,0,0); const pad=8; ctx.font='12px Inter, system-ui'; const w=Math.ceil(ctx.measureText(text).width)+pad*2; const x=Math.min(Math.max(8,vx-w*0.5), W-w-8), y=Math.max(48, vy-26); rounded(ctx,x,y,w,22,8,'#0f1323f2','#1c2240'); ctx.fillStyle='#cbd5e1'; ctx.fillText(text,x+pad,y+15); }
 }
 
+// ---- Loop ----
+(function loop(){ t++; drawFX(); drawNodes(); requestAnimationFrame(loop); })(); drawBG(); build();
+
+// ---- Interaction ----
 cv.addEventListener('mousedown', e=>{ dragging=true; last.x=e.clientX; last.y=e.clientY; });
 addEventListener('mouseup', ()=> dragging=false);
-addEventListener('mousemove', e=>{ if(dragging){ offset.x += (e.clientX-last.y?0:0); } });
-addEventListener('mousemove', e=>{
-  if(dragging){ offset.x += (e.clientX-last.x); offset.y += (e.clientY-last.y); last.x=e.clientX; last.y=e.clientY; }
-  hover = pick(e.clientX, e.clientY);
-});
+addEventListener('mousemove', e=>{ if(dragging){ offset.x += (e.clientX-last.x); offset.y += (e.clientY-last.y); last.x=e.clientX; last.y=e.clientY; } hover = pick(e.clientX,e.clientY); });
 addEventListener('wheel', e=>{ const m=Math.exp(-e.deltaY*0.001); zoom(m, e.clientX, e.clientY); });
-addEventListener('click', e=>{
-  const n = pick(e.clientX, e.clientY);
-  if(n && passFilter(n.ref)) openPane(n.ref);
-  else if(e.shiftKey){ scale=1; offset.x=W*0.5; offset.y=H*0.5; }
-});
+addEventListener('click', e=>{ const n=pick(e.clientX,e.clientY); if(n && passFilter(n.ref)) openPane(n.ref); else if(e.shiftKey){ scale=1; offset.x=W*0.5; offset.y=H*0.5; }});
 
-const search = document.getElementById('search');
-const fZone = document.getElementById('filterZone');
-document.getElementById('exportBtn').onclick = ()=> download(JSON.stringify(currentDATA,null,2), 'characters.json', 'application/json');
-document.getElementById('importFile').onchange = ev=>{
-  const f = ev.target.files[0]; if(!f) return;
-  const r = new FileReader();
-  r.onload = ()=>{ try{ const json=JSON.parse(r.result); if(json && Array.isArray(json.entries)){ persist(json); build(json); } else alert('Expected {"entries":[...]}'); }catch(err){ alert('Import failed: '+err.message); } };
-  r.readAsText(f);
-};
-document.getElementById('resetBtn').onclick = ()=>{ if(confirm('Reset local data to seeds?')){ persist(SEED); build(SEED); } };
+// ---- Import/Export/Search ----
+const search = document.getElementById('search'); const fZone = document.getElementById('filterZone');
+search.oninput = ()=>{}; fZone.onchange = ()=>{};
 
-function openPane(e){
-  const pane = document.getElementById('pane');
-  pane.hidden = false;
-  document.getElementById('meta').textContent = e.type || 'Entry';
-  document.getElementById('pName').textContent = e.name || '—';
-  document.getElementById('pZone').textContent = e.zoneType || '—';
-  document.getElementById('pPower').textContent = e.power || '—';
-  document.getElementById('pCath').textContent = e.catharsis || '—';
-  document.getElementById('pBio').textContent = e.bio || '—';
-}
+document.getElementById('exportBtn').onclick = ()=> download(JSON.stringify(DATA,null,2), 'characters.json', 'application/json');
+document.getElementById('importFile').onchange = ev=>{ const f = ev.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = ()=>{ try{ const json = JSON.parse(r.result); if(json && Array.isArray(json.entries)){ DATA=json; build(); } else alert('Invalid file format: expected {"entries":[...]}'); }catch(err){ alert('Import failed: '+err.message); } }; r.readAsText(f); };
 
+// ---- Pane ----
+function openPane(e){ const pane=document.getElementById('pane'); pane.hidden=false; document.getElementById('meta').textContent=e.type||'Entry'; document.getElementById('pName').textContent=e.name||'—'; document.getElementById('pZone').textContent=e.zoneType||'—'; document.getElementById('pPower').textContent=e.power||'—'; document.getElementById('pCath').textContent=e.catharsis||'—'; document.getElementById('pBio').textContent=e.bio||'—'; }
+
+// ---- Helpers ----
 function E(name,type,zoneType,power,catharsis,bio){ return { id: uid(), name, type, zoneType, power, catharsis, bio }; }
-function persist(data){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch(e){} }
-function loadLocal(){ try{ const s = localStorage.getItem(STORAGE_KEY); if(!s) return null; const j=JSON.parse(s); if(j && Array.isArray(j.entries)) return j; }catch(e){} return null; }
-function pick(px,py){ const x = (px - offset.x)/scale, y = (py - offset.y)/scale; for(let i=nodes.length-1;i>=0;i--){ const n=nodes[i]; if(!passFilter(n.ref)) continue; const dx=x-n.x, dy=y-n.y; if(dx*dx+dy*dy<=n.r*n.r) return n; } return null; }
-function passFilter(e){ const q=(search.value||'').toLowerCase(); if(fZone.value && e.zoneType!==fZone.value) return false; if(!q) return true; return [e.name,e.type,e.zoneType,e.power,e.catharsis,e.bio].join(' ').toLowerCase().includes(q); }
-function resize(){ W=innerWidth; H=innerHeight; bg.width=W; bg.height=H; cv.width=W; cv.height=H; }
+function resize(){ W=innerWidth; H=innerHeight; bg.width=W; bg.height=H; fx.width=W; fx.height=H; cv.width=W; cv.height=H; drawBG(); }
 function orb(c,x,y,r,a,b){ const g=c.createRadialGradient(x,y,0,x,y,r); g.addColorStop(0,a); g.addColorStop(1,b); c.fillStyle=g; c.beginPath(); c.arc(x,y,r,0,Math.PI*2); c.fill(); }
-function circle(x,y,r,fill,doFill,doStroke){ ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); if(doFill && fill){ ctx.fillStyle=fill; ctx.fill(); } if(doStroke){ ctx.stroke(); } }
+function circle(c,x,y,r,fill,doFill,doStroke){ c.beginPath(); c.arc(x,y,r,0,Math.PI*2); if(doFill && fill){ c.fillStyle=fill; c.fill(); } if(doStroke){ c.stroke(); } }
 function rounded(c,x,y,w,h,r,fill,stroke){ c.fillStyle=fill; c.strokeStyle=stroke; c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); c.fill(); c.stroke(); }
+function pick(px,py){ const x=(px-offset.x)/scale, y=(py-offset.y)/scale; for(let i=nodes.length-1;i>=0;i--){ const n=nodes[i]; if(!passFilter(n.ref)) continue; const dx=x-n.x, dy=y-n.y; if(dx*dx+dy*dy<=n.r*n.r) return n; } return null; }
+function passFilter(e){ const q=(search.value||'').toLowerCase(); if(fZone.value && e.zoneType!==fZone.value) return false; if(!q) return true; return [e.name,e.type,e.zoneType,e.power,e.catharsis,e.bio].join(' ').toLowerCase().includes(q); }
 function zoom(mult, sx, sy){ const wx=(sx-offset.x)/scale, wy=(sy-offset.y)/scale; scale*=mult; offset.x = sx - wx*scale; offset.y = sy - wy*scale; }
 function rgba(col,a){ if(typeof col==='number'){ const r=(col>>16)&255,g=(col>>8)&255,b=col&255; return `rgba(${r},${g},${b},${a})`; } if(col.startsWith('#')){ const v=parseInt(col.slice(1),16); const r=(v>>16)&255,g=(v>>8)&255,b=v&255; return `rgba(${r},${g},${b},${a})`; } return col.replace(')',`, ${a})`).replace('rgb(','rgba('); }
 function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
