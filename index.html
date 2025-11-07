@@ -3,17 +3,16 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>The Atrium — Starter</title>
-<meta name="description" content="Interactive Atrium map with seed characters, import/export, pan/zoom, and local persistence.">
+<title>The Atrium — Enhanced Visual</title>
+<meta name="description" content="Interactive Atrium with animated spiral, rings, particles; seed nodes; import/export.">
 <style>
   :root{
-    --bg1:#0b0f1d; --bg2:#070a13;
     --panel:#0f1323; --panelB:#1c2240;
     --ink:#e8ecf3; --muted:#9aa4b5;
     --pathos:#ff7a93; --logos:#7cc4ff; --ethos:#ffd166; --eidolon:#c39bff; --unknown:#9fb0c3;
   }
   html,body{height:100%}
-  body{margin:0;background:radial-gradient(1200px 800px at 70% 30%,#15192a 0%,#0b0e19 55%,#070811 100%);
+  body{margin:0;background:radial-gradient(1400px 900px at 65% 35%,#0f1222 0%,#0b0f1d 60%,#070a13 100%);
        color:var(--ink);font:14px/1.45 system-ui,Segoe UI,Inter,Roboto,Helvetica,Arial,sans-serif;overflow:hidden}
   header{position:fixed;top:12px;left:12px;right:12px;display:flex;gap:10px;z-index:10;align-items:center}
   h1{font-size:16px;margin:0;padding:8px 12px;background:#0f1323cc;border:1px solid var(--panelB);
@@ -49,7 +48,7 @@
     <select id="filterZone"><option value="">Any Zone</option><option>Pathos</option><option>Logos</option><option>Ethos</option><option>Greater Eidolon</option><option>Unknown</option></select>
     <button class="btn" id="exportBtn">Export JSON</button>
     <label class="btn" for="importFile">Import JSON<input id="importFile" type="file" accept="application/json" style="display:none"></label>
-    <button class="btn" id="resetBtn" title="Reset to built‑in seeds">Reset Seeds</button>
+    <button class="btn" id="resetBtn" title="Reset to built-in seeds">Reset Seeds</button>
   </div>
 </header>
 <canvas id="bg"></canvas>
@@ -63,80 +62,64 @@
   <div class="kv"><b>Bio / Notes</b><div id="pBio">—</div></div>
 </aside>
 <div id="hint">Drag to pan • Scroll to zoom • Click a node • Shift-click empty space to recenter</div>
-<div class="footer">Autoloads seeds → then localStorage → then characters.json (if present)</div>
+<div class="footer">Seeds → localStorage → characters.json</div>
 
 <script>
-const STORAGE_KEY = 'atrium_v1';
+const STORAGE_KEY = 'atrium_v2';
 const COLOR = { Pathos: css('--pathos'), Logos: css('--logos'), Ethos: css('--ethos'), 'Greater Eidolon': css('--eidolon'), Unknown: css('--unknown') };
 
-// ---- Built-in seed data so the Atrium is NEVER empty ----
-const SEED = {
-  entries:[
-    E('Robin','Character','Greater Eidolon',
-      'Stay Gold — produces controllable gold dust; blink via dust “Chase”; beams; flash; access to Pathos/Logos/Ethos modes via Icarus link.',
-      '(Future) Catharsis — identity becomes unshakable; power expresses conviction.',
-      'Gift‑giver learning real kindness; wants to atone.'),
-    E('Icarus','Greater Eidolon','Ethos',
-      'Wings of Freedom — declare freedom from a concept; timer ends with catastrophic backlash proportional to the freedom.',
-      '—','Ancient ambition choosing restraint; cursed by Reverse Index.'),
-    E('Azalea','Character','Pathos',
-      'Resonant Arsenal — empathically reads emotions and forges weapons; form by Type, properties by Characteristic; power scales with understanding.',
-      'Actualized Arsenal','Empath whose compassion is both strength and burden.')
-  ]
-};
+const SEED = { entries:[
+  E('Robin','Character','Greater Eidolon','Stay Gold — produces controllable gold dust; blink via dust “Chase”; beams; flash; access to Pathos/Logos/Ethos modes via Icarus link.','(Future) Catharsis — identity becomes unshakable; power expresses conviction.','Gift-giver learning real kindness; wants to atone.'),
+  E('Icarus','Greater Eidolon','Ethos','Wings of Freedom — declare freedom from a concept; timer ends with catastrophic backlash proportional to the freedom.','—','Ancient ambition choosing restraint; cursed by Reverse Index.'),
+  E('Azalea','Character','Pathos','Resonant Arsenal — empathically reads emotions and forges weapons; form by Type, properties by Characteristic; power scales with understanding.','Actualized Arsenal','Empath whose compassion is both strength and burden.')
+]};
 
-// ---- Load order: localStorage → characters.json → seeds ----
 (async function init(){
   let DATA = loadLocal();
-  if(!DATA){ // try external file
-    try{
-      const r = await fetch('characters.json', {cache:'no-store'});
-      if(r.ok){
-        const j = await r.json();
-        if(j && Array.isArray(j.entries)) DATA = j;
-      }
-    }catch{ /* ignore */ }
+  if(!DATA){
+    try{ const r = await fetch('characters.json', {cache:'no-store'}); if(r.ok){ const j=await r.json(); if(j && Array.isArray(j.entries)) DATA=j; } }catch{}
   }
   if(!DATA) DATA = SEED;
   start(DATA);
 })();
 
-function start(DATA){
-  persist(DATA);
-  build(DATA);
-  wireUI(DATA);
-}
+function start(DATA){ persist(DATA); build(DATA); wireUI(DATA); }
 
-// ---------- Canvas + Interaction ----------
 const bg = document.getElementById('bg'), bctx = bg.getContext('2d');
 const cv = document.getElementById('nodes'), ctx = cv.getContext('2d');
 let W=innerWidth, H=innerHeight; resize(); addEventListener('resize', resize);
 
 let nodes=[], scale=1, offset={x:W*0.5, y:H*0.5}, dragging=false, last={x:0,y:0}, hover=null, currentDATA=null;
+let particles=[];
 
 function build(DATA){
   currentDATA = DATA;
-  // spiral layout
   const R = Math.min(W,H)*0.38;
   const N = DATA.entries.length;
   nodes = DATA.entries.map((e,i)=>{
     const t = (N<=1)?0.5:(i/(N-1));
-    const angle = t * Math.PI*5.2 + i*0.27;
-    const r = 42 + t*R;
+    const angle = t * Math.PI*5.6 + i*0.28;
+    const r = 60 + t*R;
     const x = Math.cos(angle)*r, y = Math.sin(angle)*r;
-    const rad = e.type==='Greater Eidolon'? 16 : 12;
+    const rad = e.type==='Greater Eidolon'? 17 : 13;
     return { id: e.id || uid(), x, y, r: rad, ref:e, color: COLOR[e.zoneType] || COLOR.Unknown };
+  });
+  const P = 160;
+  particles = Array.from({length:P}, ()=>{
+    const a = Math.random()*Math.PI*2;
+    const rr = 120 + Math.random()*(R+300);
+    return { x: Math.cos(a)*rr, y: Math.sin(a)*rr, r: 0.8+Math.random()*1.8, s: 0.2+Math.random()*0.9 };
   });
 }
 
-let tick=0;
-(function loop(){ tick++; drawBG(); draw(); requestAnimationFrame(loop); })();
+let t=0;
+(function loop(){ t+=1; drawBG(); draw(); requestAnimationFrame(loop); })();
 
 function drawBG(){
   bctx.setTransform(1,0,0,1,0,0);
   bctx.globalAlpha = 0.22; bctx.fillStyle = '#0b0f1d'; bctx.fillRect(0,0,W,H);
-  orb(bctx, W*0.65 + Math.cos(tick*0.003)*60, H*0.4 + Math.sin(tick*0.002)*40, Math.min(W,H)*0.45, '#1d2448', '#0c0f1f');
-  orb(bctx, W*0.25, H*0.65, Math.min(W,H)*0.36, '#10162d', '#080a15');
+  orb(bctx, W*0.65 + Math.cos(t*0.003)*60, H*0.4 + Math.sin(t*0.002)*40, Math.min(W,H)*0.48, '#1a2146', '#0b0f1d');
+  orb(bctx, W*0.28, H*0.7, Math.min(W,H)*0.38, '#0f1634', '#070a13');
 }
 
 function draw(){
@@ -145,22 +128,52 @@ function draw(){
   ctx.translate(offset.x, offset.y);
   ctx.scale(scale, scale);
 
-  // spiral guide
-  ctx.save(); ctx.globalAlpha = 0.12; ctx.strokeStyle = '#3a4364'; ctx.lineWidth=1/scale;
-  ctx.beginPath(); let rr=8;
-  for(let a=0; a<Math.PI*6; a+=0.12){ const x=Math.cos(a)*rr, y=Math.sin(a)*rr; a===0?ctx.moveTo(x,y):ctx.lineTo(x,y); rr+=3.2; }
-  ctx.stroke(); ctx.restore();
+  // Concentric rings
+  const baseR = 140, rings = 6;
+  for(let i=0;i<rings;i++){
+    const rr = baseR + i*110;
+    ctx.lineWidth = 2/scale;
+    ctx.strokeStyle = `rgba(160,180,240,${0.14 - i*0.014})`;
+    ctx.beginPath(); ctx.arc(0,0,rr,0,Math.PI*2); ctx.stroke();
+  }
 
-  // nodes
+  // Bright spiral with glow
+  ctx.save();
+  const glow = ctx.createLinearGradient(-300,-300,300,300);
+  glow.addColorStop(0,'rgba(190,210,255,0.32)');
+  glow.addColorStop(1,'rgba(150,170,255,0.10)');
+  ctx.strokeStyle = glow;
+  ctx.lineWidth = 3/scale;
+  ctx.beginPath();
+  let rr=20;
+  for(let a=0; a<Math.PI*7.6; a+=0.11){
+    const x=Math.cos(a+ t*0.0007)*rr, y=Math.sin(a+ t*0.0007)*rr;
+    a===0?ctx.moveTo(x,y):ctx.lineTo(x,y); rr+=2.8;
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // Particles
+  ctx.save();
+  ctx.fillStyle = 'rgba(200,210,255,0.7)';
+  particles.forEach(p=>{
+    const px = p.x + Math.cos((p.x+p.y+t*0.02)*0.01)*3*p.s;
+    const py = p.y + Math.sin((p.x-p.y-t*0.018)*0.01)*3*p.s;
+    ctx.globalAlpha = 0.35 + 0.35*Math.sin((p.x*0.3 + t*0.03)*0.5);
+    ctx.beginPath(); ctx.arc(px,py,p.r,0,Math.PI*2); ctx.fill();
+  });
+  ctx.restore();
+
+  // Nodes
   nodes.forEach(n=>{
     const alpha = passFilter(n.ref) ? 1 : 0.12;
     ctx.save(); ctx.globalAlpha = alpha;
-    circle(n.x, n.y, n.r*2.2, rgba(n.color,0.18), true);
-    circle(n.x, n.y, n.r, rgba(n.color,0.95), true);
-    ctx.lineWidth = (n.ref.type==='Greater Eidolon'? 2.6 : 1.6)/scale;
-    ctx.strokeStyle = rgba('#cbd5e1', 0.65);
+    circle(n.x, n.y, n.r*2.5, rgba(n.color,0.20), true);
+    circle(n.x, n.y, n.r, rgba(n.color,0.96), true);
+    ctx.lineWidth = (n.ref.type==='Greater Eidolon'? 2.8 : 1.8)/scale;
+    ctx.strokeStyle = rgba('#cbd5e1', 0.68);
     circle(n.x, n.y, n.r, null, false, true);
-    ctx.fillStyle = 'rgba(8,10,16,.9)'; ctx.font = `${Math.max(9, n.r)}px Inter, system-ui`;
+    ctx.fillStyle = 'rgba(8,10,16,.92)'; ctx.font = `${Math.max(9, n.r)}px Inter, system-ui`;
     ctx.textAlign='center'; ctx.textBaseline='middle';
     const initials = (n.ref.name||'?').split(/\s+/).map(s=>s[0]).join('').slice(0,3).toUpperCase();
     ctx.fillText(initials, n.x, n.y+0.5);
@@ -179,9 +192,9 @@ function draw(){
   }
 }
 
-// interactions
 cv.addEventListener('mousedown', e=>{ dragging=true; last.x=e.clientX; last.y=e.clientY; });
 addEventListener('mouseup', ()=> dragging=false);
+addEventListener('mousemove', e=>{ if(dragging){ offset.x += (e.clientX-last.y?0:0); } });
 addEventListener('mousemove', e=>{
   if(dragging){ offset.x += (e.clientX-last.x); offset.y += (e.clientY-last.y); last.x=e.clientX; last.y=e.clientY; }
   hover = pick(e.clientX, e.clientY);
@@ -193,28 +206,17 @@ addEventListener('click', e=>{
   else if(e.shiftKey){ scale=1; offset.x=W*0.5; offset.y=H*0.5; }
 });
 
-// filters + import/export + reset
 const search = document.getElementById('search');
 const fZone = document.getElementById('filterZone');
-search.oninput = ()=>{}; fZone.onchange = ()=>{};
-
 document.getElementById('exportBtn').onclick = ()=> download(JSON.stringify(currentDATA,null,2), 'characters.json', 'application/json');
 document.getElementById('importFile').onchange = ev=>{
   const f = ev.target.files[0]; if(!f) return;
   const r = new FileReader();
-  r.onload = ()=>{
-    try{
-      const json = JSON.parse(r.result);
-      if(json && Array.isArray(json.entries)){
-        persist(json); build(json);
-      } else alert('Invalid file format: expected {"entries":[...]}');
-    }catch(err){ alert('Import failed: '+err.message); }
-  };
+  r.onload = ()=>{ try{ const json=JSON.parse(r.result); if(json && Array.isArray(json.entries)){ persist(json); build(json); } else alert('Expected {"entries":[...]}'); }catch(err){ alert('Import failed: '+err.message); } };
   r.readAsText(f);
 };
-document.getElementById('resetBtn').onclick = ()=>{ if(confirm('Reset local data to built‑in seeds?')){ persist(SEED); build(SEED); } };
+document.getElementById('resetBtn').onclick = ()=>{ if(confirm('Reset local data to seeds?')){ persist(SEED); build(SEED); } };
 
-// pane
 function openPane(e){
   const pane = document.getElementById('pane');
   pane.hidden = false;
@@ -226,7 +228,6 @@ function openPane(e){
   document.getElementById('pBio').textContent = e.bio || '—';
 }
 
-// helpers
 function E(name,type,zoneType,power,catharsis,bio){ return { id: uid(), name, type, zoneType, power, catharsis, bio }; }
 function persist(data){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch(e){} }
 function loadLocal(){ try{ const s = localStorage.getItem(STORAGE_KEY); if(!s) return null; const j=JSON.parse(s); if(j && Array.isArray(j.entries)) return j; }catch(e){} return null; }
