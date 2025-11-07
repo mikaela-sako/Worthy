@@ -3,312 +3,243 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Interactive Atrium</title>
+<title>The Atrium — Starter</title>
+<meta name="description" content="Interactive Atrium map with seed characters, import/export, pan/zoom, and local persistence.">
 <style>
   :root{
-    --bg:#0a0b10;--bg2:#0e1120;--panel:#11141f;--ink:#e8ecf3;--muted:#9aa4b5;--accent:#7dd3fc;
-    --pathos:#ff7a93;--logos:#7cc4ff;--ethos:#ffd166;--eidolon:#c39bff;--unknown:#9fb0c3;
+    --bg1:#0b0f1d; --bg2:#070a13;
+    --panel:#0f1323; --panelB:#1c2240;
+    --ink:#e8ecf3; --muted:#9aa4b5;
+    --pathos:#ff7a93; --logos:#7cc4ff; --ethos:#ffd166; --eidolon:#c39bff; --unknown:#9fb0c3;
   }
   html,body{height:100%}
-  body{margin:0;background:radial-gradient(1200px 800px at 70% 30%,#15192a 0%,#0b0e19 55%,#070811 100%);color:var(--ink);font:14px/1.4 Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;overflow:hidden}
-  header{position:fixed;top:12px;left:12px;right:12px;display:flex;align-items:center;gap:10px;z-index:10}
-  h1{font-size:16px;margin:0;padding:8px 12px;background:#0f1323aa;border:1px solid #1c2240;border-radius:12px;backdrop-filter:blur(4px)}
-  .toolbar{display:flex;gap:8px;margin-left:auto}
-  .btn, select, input[type="search"]{background:#0f1323;border:1px solid #1c2240;color:var(--ink);border-radius:10px;padding:8px 10px}
-  .btn{cursor:pointer}
-  .legend{display:flex;gap:8px;padding:6px 8px;background:#0f1323aa;border:1px solid #1c2240;border-radius:12px}
+  body{margin:0;background:radial-gradient(1200px 800px at 70% 30%,#15192a 0%,#0b0e19 55%,#070811 100%);
+       color:var(--ink);font:14px/1.45 system-ui,Segoe UI,Inter,Roboto,Helvetica,Arial,sans-serif;overflow:hidden}
+  header{position:fixed;top:12px;left:12px;right:12px;display:flex;gap:10px;z-index:10;align-items:center}
+  h1{font-size:16px;margin:0;padding:8px 12px;background:#0f1323cc;border:1px solid var(--panelB);
+     border-radius:12px;backdrop-filter:blur(4px)}
+  .legend{display:flex;gap:8px;padding:6px 8px;background:#0f1323cc;border:1px solid var(--panelB);border-radius:12px}
   .dot{width:10px;height:10px;border-radius:50%}
-  .pane{position:fixed;right:12px;top:56px;bottom:12px;width:360px;background:#0f1323f2;border:1px solid #1c2240;border-radius:16px;padding:14px;overflow:auto;backdrop-filter:blur(6px);z-index:9}
-  .pane h2{margin:0 0 4px;font-size:18px}
-  .sub{color:var(--muted)}
-  .pill{display:inline-block;border:1px solid #2b355f;padding:2px 8px;border-radius:999px;margin-right:6px;color:var(--muted);font-size:12px}
-  .kv{margin:8px 0}
-  .kv b{display:block;color:#c7d2fe;font-size:11px;letter-spacing:.2px;text-transform:uppercase}
-  .kv div{white-space:pre-wrap}
-  canvas{position:fixed;inset:0;display:block}
-  #hint{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#0f1323cc;border:1px solid #1c2240;border-radius:999px;padding:6px 12px;color:var(--muted);z-index:5}
-  .tag{font-size:11px;border:1px solid #2b355f;padding:3px 8px;border-radius:8px;color:#cbd5e1}
   .row{display:flex;gap:8px;align-items:center}
+  .toolbar{margin-left:auto;display:flex;gap:8px}
+  .btn,select,input[type="search"]{background:#0f1323;border:1px solid var(--panelB);color:var(--ink);border-radius:10px;padding:8px 10px}
+  .btn{cursor:pointer}
+  canvas{position:fixed;inset:0;display:block}
+  aside{position:fixed;right:12px;top:56px;bottom:12px;width:360px;background:#0f1323f2;border:1px solid var(--panelB);
+        border-radius:16px;padding:14px;overflow:auto;backdrop-filter:blur(6px);z-index:9}
+  aside[hidden]{display:none}
+  .pill{display:inline-block;border:1px solid #2b355f;padding:2px 8px;border-radius:999px;margin-right:6px;color:var(--muted);font-size:12px}
+  .kv{margin:8px 0}.kv b{display:block;color:#c7d2fe;font-size:11px;letter-spacing:.2px;text-transform:uppercase}
+  #hint{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);background:#0f1323cc;border:1px solid var(--panelB);
+        border-radius:999px;padding:6px 12px;color:var(--muted);z-index:7}
+  .footer{position:fixed;left:12px;bottom:12px;background:#0f1323cc;border:1px solid var(--panelB);border-radius:12px;padding:6px 10px;color:var(--muted)}
 </style>
 </head>
 <body>
 <header>
   <h1>🜁 The Atrium</h1>
   <div class="legend">
-    <div class="row"><span class="dot" style="background:var(--pathos)"></span><span class="sub">Pathos</span></div>
-    <div class="row"><span class="dot" style="background:var(--logos)"></span><span class="sub">Logos</span></div>
-    <div class="row"><span class="dot" style="background:var(--ethos)"></span><span class="sub">Ethos</span></div>
-    <div class="row"><span class="dot" style="background:var(--eidolon)"></span><span class="sub">Greater Eidolon</span></div>
+    <div class="row"><span class="dot" style="background:var(--pathos)"></span><span>Pathos</span></div>
+    <div class="row"><span class="dot" style="background:var(--logos)"></span><span>Logos</span></div>
+    <div class="row"><span class="dot" style="background:var(--ethos)"></span><span>Ethos</span></div>
+    <div class="row"><span class="dot" style="background:var(--eidolon)"></span><span>Greater Eidolon</span></div>
   </div>
   <div class="toolbar">
-    <input id="search" type="search" placeholder="Search characters…" />
-    <select id="filterType">
-      <option value="">All</option>
-      <option>Character</option>
-      <option>Greater Eidolon</option>
-      <option>Organization</option>
-      <option>Concept</option>
-    </select>
-    <select id="filterZone">
-      <option value="">Any Zone</option>
-      <option>Pathos</option>
-      <option>Logos</option>
-      <option>Ethos</option>
-      <option>Greater Eidolon</option>
-    </select>
+    <input id="search" type="search" placeholder="Search… (name, text)" />
+    <select id="filterZone"><option value="">Any Zone</option><option>Pathos</option><option>Logos</option><option>Ethos</option><option>Greater Eidolon</option><option>Unknown</option></select>
     <button class="btn" id="exportBtn">Export JSON</button>
-    <label class="btn" for="importFile">Import<input id="importFile" type="file" accept="application/json" style="display:none"></label>
+    <label class="btn" for="importFile">Import JSON<input id="importFile" type="file" accept="application/json" style="display:none"></label>
+    <button class="btn" id="resetBtn" title="Reset to built‑in seeds">Reset Seeds</button>
   </div>
 </header>
-<canvas id="fx"></canvas>
-<canvas id="atrium"></canvas>
-<aside class="pane" id="pane" hidden>
-  <div class="sub" id="breadcrumbs">Entry</div>
+<canvas id="bg"></canvas>
+<canvas id="nodes"></canvas>
+<aside id="pane" hidden>
+  <div id="meta" class="pill">Entry</div>
   <h2 id="pName">—</h2>
-  <div class="sub" id="pMeta">—</div>
-  <div class="kv"><b>Modus / Power</b><div id="pPower">—</div></div>
-  <div class="kv"><b>Catharsis / Evolution</b><div id="pCatharsis">—</div></div>
-  <div class="kv"><b>Biography / Notes</b><div id="pBio">—</div></div>
-  <div class="kv"><b>Relationships</b><div id="pRels">—</div></div>
-  <div class="kv"><b>Tags</b><div id="pTags">—</div></div>
+  <div class="kv"><b>Zone</b><div id="pZone">—</div></div>
+  <div class="kv"><b>Power</b><div id="pPower">—</div></div>
+  <div class="kv"><b>Catharsis / Evolution</b><div id="pCath">—</div></div>
+  <div class="kv"><b>Bio / Notes</b><div id="pBio">—</div></div>
 </aside>
-<div id="hint">Drag to pan • Scroll to zoom • Click nodes to open details • Shift-click empty space to recenter</div>
-<script>
-/**
- * Interactive Atrium — no libraries, single-file, free to host.
- * - Canvas particle field (fx) + Canvas node graph (atrium)
- * - Pan/zoom, hover tooltips, click to open side pane
- * - Import/Export JSON
- * - Seeded with your characters; edit DATA below or import
- */
+<div id="hint">Drag to pan • Scroll to zoom • Click a node • Shift-click empty space to recenter</div>
+<div class="footer">Autoloads seeds → then localStorage → then characters.json (if present)</div>
 
-const COLOR = {
-  Pathos: getCSS('--pathos'), Logos: getCSS('--logos'), Ethos: getCSS('--ethos'), 'Greater Eidolon': getCSS('--eidolon'), Unknown: getCSS('--unknown')
+<script>
+const STORAGE_KEY = 'atrium_v1';
+const COLOR = { Pathos: css('--pathos'), Logos: css('--logos'), Ethos: css('--ethos'), 'Greater Eidolon': css('--eidolon'), Unknown: css('--unknown') };
+
+// ---- Built-in seed data so the Atrium is NEVER empty ----
+const SEED = {
+  entries:[
+    E('Robin','Character','Greater Eidolon',
+      'Stay Gold — produces controllable gold dust; blink via dust “Chase”; beams; flash; access to Pathos/Logos/Ethos modes via Icarus link.',
+      '(Future) Catharsis — identity becomes unshakable; power expresses conviction.',
+      'Gift‑giver learning real kindness; wants to atone.'),
+    E('Icarus','Greater Eidolon','Ethos',
+      'Wings of Freedom — declare freedom from a concept; timer ends with catastrophic backlash proportional to the freedom.',
+      '—','Ancient ambition choosing restraint; cursed by Reverse Index.'),
+    E('Azalea','Character','Pathos',
+      'Resonant Arsenal — empathically reads emotions and forges weapons; form by Type, properties by Characteristic; power scales with understanding.',
+      'Actualized Arsenal','Empath whose compassion is both strength and burden.')
+  ]
 };
 
-// ---- Seed Data (edit me or use Import) ----
-let DATA = { entries: [
-  E('Robin','Character','Greater Eidolon', 'Greater Eidolon Icarus / Zone Type Manipulation', 'Stay Gold — produces controllable gold dust; movement (Chase), beams, flash; overuse abrades the skin.', 'Catharsis: TBD', 'Gift-giver learning real kindness; wants to atone and be loved.', 'Pathos,freedom,redemption', 'Icarus: host-of\nAzalea: teammate\nMinerva Quinn: subject-of'),
-  E('Icarus','Greater Eidolon','Ethos','Wings of Freedom — declare freedom from a concept; extreme recoil when timer ends.','Reverse Index curse ages him backward; reality-level threat who self-restrains.','—','Ancient being of Ambition seeking true freedom.','ethos,freedom,ambition','Robin: bonded-to\nAthene: opposed-to'),
-  E('Azalea','Character','Pathos','Resonant Arsenal — senses emotions; forges weapons from them.','Catharsis: Actualized Arsenal','Empath whose power scales with understanding.','pathos,empathy,weapons','Robin: ally'),
-  E('Ayn','Character','Logos','Superposition — multiple true instances under one mind; mental toll.','Catharsis: Ultraposition — fluid, distributed self guiding semi-independent instances.','Detachment as freedom.','logos,identity,detachment','Jiko Alaire: ally'),
-  E('Jiko Alaire','Character','Ethos','Galaxy Drive — place stars and ride accelerating starstreams; Nebula Engine for micro-multipliers.','—','Conviction → motion.','ethos,motion,discipline','Ayn: ally'),
-  E('Kay Silvia','Character','Logos','Ethereal Appendage — arm becomes contained plasma via conduit; fires manipulable projectiles.','—','Tactical engineer.','logos,precision,tool','Minerva Quinn: protege-of'),
-  E('Dr. Minerva Quinn','Character','Greater Eidolon','Stack — effort compounds exponentially. Eidolic Modus: Reverse Index (Feather/Wing/Talon).','—','Founder of Wisdom Agency; brilliance with moral weight.','wisdom,science,agency','Athene: assimilated-with\nKay Silvia: mentor-of'),
-  E('Athene (Hybris)','Greater Eidolon','Ethos','Reverse Index — invert natural processes; pride masked as wisdom.','—','Controls geopolitics via Worthy; sees Icarus as a threat.','ethos,pride,control','Minerva Quinn: assimilated-with\nIcarus: opposed-to\nWorthy: patron-of'),
-  E('Mikhail Maxim','Character','Pathos','Cloud 9 — cloud cape controls air/pressure; can merge with sky.','—','Compassionate mentor.','pathos,mentor,air','—'),
-  E('Prince','Greater Eidolon','Ethos','Shatter Sun — fracture the air by perception; 2D vision grants impossible reach; cooldown by intensity.','—','Envy as power.','ethos,envy,precision','—'),
-  E('Phobos','Character','Pathos','Tears for Fears — syphon fear → tears of Malice; spawn Dreads/Monsters; Guile barrier. Positive fear feedback.','—','Fear contagion.','pathos,fear,malice','—'),
-  E('Worthy','Character','Unknown','Vestiture — deem targets worthy to imbue control/traits; depends on belief.','—','Authority through shared belief.','authority,faith,control','Athene: allied-with')
-]};
+// ---- Load order: localStorage → characters.json → seeds ----
+(async function init(){
+  let DATA = loadLocal();
+  if(!DATA){ // try external file
+    try{
+      const r = await fetch('characters.json', {cache:'no-store'});
+      if(r.ok){
+        const j = await r.json();
+        if(j && Array.isArray(j.entries)) DATA = j;
+      }
+    }catch{ /* ignore */ }
+  }
+  if(!DATA) DATA = SEED;
+  start(DATA);
+})();
 
-function E(name,type,zone,power,catharsis,bio,tags,rels){
-  return { id: uid(), name, type, zoneType: zone, power, catharsis, bio, tags, rels };
+function start(DATA){
+  persist(DATA);
+  build(DATA);
+  wireUI(DATA);
 }
 
-// ---- Layout state ----
-const canvas = document.getElementById('atrium');
-const ctx = canvas.getContext('2d');
-const fx = document.getElementById('fx');
-const fxc = fx.getContext('2d');
-let W=innerWidth,H=innerHeight; resize(); addEventListener('resize', resize);
+// ---------- Canvas + Interaction ----------
+const bg = document.getElementById('bg'), bctx = bg.getContext('2d');
+const cv = document.getElementById('nodes'), ctx = cv.getContext('2d');
+let W=innerWidth, H=innerHeight; resize(); addEventListener('resize', resize);
 
-let nodes = [];
-let links = []; // derived from rels (for glow lines)
-let scale = 1, offset = {x: W*0.5, y: H*0.5};
-let dragging = false, last = {x:0,y:0};
-let hoverId = null;
+let nodes=[], scale=1, offset={x:W*0.5, y:H*0.5}, dragging=false, last={x:0,y:0}, hover=null, currentDATA=null;
 
-buildGraph();
-requestAnimationFrame(loop);
-
-// ---- UI wiring ----
-const search = document.getElementById('search');
-const fType = document.getElementById('filterType');
-const fZone = document.getElementById('filterZone');
-search.oninput = rebuildFiltered;
-fType.onchange = rebuildFiltered;
-fZone.onchange = rebuildFiltered;
-
-canvas.addEventListener('mousedown', e=>{ dragging=true; last.x=e.clientX; last.y=e.clientY; });
-addEventListener('mouseup', ()=> dragging=false);
-addEventListener('mousemove', e=>{
-  if(dragging){ offset.x += (e.clientX-last.x); offset.y += (e.clientY-last.y); last.x=e.clientX; last.y=e.clientY; }
-  hoverId = pickNode(e.clientX, e.clientY);
-});
-addEventListener('wheel', e=>{ const m = Math.exp(-e.deltaY*0.001); zoomAt(m, e.clientX, e.clientY); });
-addEventListener('click', e=>{
-  const id = pickNode(e.clientX, e.clientY);
-  if(id){ openPane(byId(id)); }
-  else if(e.shiftKey){ offset.x=W*0.5; offset.y=H*0.5; scale=1; }
-});
-
-// Import/Export
-const exportBtn = document.getElementById('exportBtn');
-const importFile = document.getElementById('importFile');
-exportBtn.onclick = ()=> downloadJSON(DATA, 'atrium-data.json');
-importFile.onchange = ev => {
-  const f = ev.target.files[0]; if(!f) return; const r=new FileReader();
-  r.onload = ()=>{ try{ DATA = JSON.parse(r.result); buildGraph(); }catch(err){ alert('Import failed: '+err.message);} };
-  r.readAsText(f);
-};
-
-// ---- Build graph positions ----
-function buildGraph(){
-  // parse links from rels lines of form "Name: type"
-  const nameToId = new Map(DATA.entries.map(e=>[e.name, e.id]));
-  links = [];
-  DATA.entries.forEach(e=>{
-    (e.rels||'').split('\n').map(s=>s.trim()).filter(Boolean).forEach(line=>{
-      const [n] = line.split(':');
-      if(n && nameToId.has(n.trim())) links.push({ a:e.id, b:nameToId.get(n.trim()) });
-    });
-  });
-
-  // place nodes on a spiral (atrium vibe) with small jitter
+function build(DATA){
+  currentDATA = DATA;
+  // spiral layout
   const R = Math.min(W,H)*0.38;
-  const cx = 0, cy = 0; // world center
   const N = DATA.entries.length;
   nodes = DATA.entries.map((e,i)=>{
-    const t = i / Math.max(1,N-1);
-    const angle = t * Math.PI*4 + i*0.15;
-    const r = 40 + t*R;
-    const x = cx + Math.cos(angle)*r + rand(-18,18);
-    const y = cy + Math.sin(angle)*r + rand(-18,18);
-    const rad = e.type==='Greater Eidolon'? 15 : e.type==='Organization'? 13 : 11;
-    return {
-      id:e.id, name:e.name, ref:e, x, y, r:rad,
-      color: COLOR[e.zoneType] || COLOR.Unknown,
-    };
+    const t = (N<=1)?0.5:(i/(N-1));
+    const angle = t * Math.PI*5.2 + i*0.27;
+    const r = 42 + t*R;
+    const x = Math.cos(angle)*r, y = Math.sin(angle)*r;
+    const rad = e.type==='Greater Eidolon'? 16 : 12;
+    return { id: e.id || uid(), x, y, r: rad, ref:e, color: COLOR[e.zoneType] || COLOR.Unknown };
   });
 }
 
-function rebuildFiltered(){ /* no-op draw-time filter; just redraw */ }
+let tick=0;
+(function loop(){ tick++; drawBG(); draw(); requestAnimationFrame(loop); })();
 
-// ---- Rendering loop ----
-function loop(){
-  drawFX();
-  drawGraph();
-  requestAnimationFrame(loop);
+function drawBG(){
+  bctx.setTransform(1,0,0,1,0,0);
+  bctx.globalAlpha = 0.22; bctx.fillStyle = '#0b0f1d'; bctx.fillRect(0,0,W,H);
+  orb(bctx, W*0.65 + Math.cos(tick*0.003)*60, H*0.4 + Math.sin(tick*0.002)*40, Math.min(W,H)*0.45, '#1d2448', '#0c0f1f');
+  orb(bctx, W*0.25, H*0.65, Math.min(W,H)*0.36, '#10162d', '#080a15');
 }
 
-function drawFX(){
-  // soft particle drift background
-  fxc.setTransform(1,0,0,1,0,0);
-  fxc.globalAlpha=0.22; fxc.fillStyle='#0b0f1d'; fxc.fillRect(0,0,W,H);
-  const t = performance.now()*0.0002;
-  const cx = W*0.6 + Math.cos(t)*80, cy = H*0.45 + Math.sin(t*1.3)*50;
-  gradientOrb(fxc, cx, cy, Math.min(W,H)*0.45, '#1d2448', '#0c0f1f');
-  gradientOrb(fxc, W*0.25, H*0.6, Math.min(W,H)*0.35, '#10162d', '#080a15');
-}
-
-function drawGraph(){
+function draw(){
   ctx.setTransform(1,0,0,1,0,0);
   ctx.clearRect(0,0,W,H);
-  // world xform
   ctx.translate(offset.x, offset.y);
   ctx.scale(scale, scale);
 
-  // spiral guide (subtle)
-  ctx.save(); ctx.globalAlpha=0.12; ctx.strokeStyle='#3a4364'; ctx.lineWidth=1/scale; drawSpiral(ctx); ctx.restore();
-
-  // links (glowy)
-  ctx.save(); ctx.globalAlpha=0.22; ctx.lineWidth=2/scale; ctx.strokeStyle='#6ea8ff';
-  links.forEach(L=>{
-    const a = byId(L.a), b = byId(L.b); if(!a||!b) return;
-    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
-  });
-  ctx.restore();
+  // spiral guide
+  ctx.save(); ctx.globalAlpha = 0.12; ctx.strokeStyle = '#3a4364'; ctx.lineWidth=1/scale;
+  ctx.beginPath(); let rr=8;
+  for(let a=0; a<Math.PI*6; a+=0.12){ const x=Math.cos(a)*rr, y=Math.sin(a)*rr; a===0?ctx.moveTo(x,y):ctx.lineTo(x,y); rr+=3.2; }
+  ctx.stroke(); ctx.restore();
 
   // nodes
   nodes.forEach(n=>{
-    const alpha = passFilter(n.ref)?1:0.12;
-    drawNode(n, alpha);
+    const alpha = passFilter(n.ref) ? 1 : 0.12;
+    ctx.save(); ctx.globalAlpha = alpha;
+    circle(n.x, n.y, n.r*2.2, rgba(n.color,0.18), true);
+    circle(n.x, n.y, n.r, rgba(n.color,0.95), true);
+    ctx.lineWidth = (n.ref.type==='Greater Eidolon'? 2.6 : 1.6)/scale;
+    ctx.strokeStyle = rgba('#cbd5e1', 0.65);
+    circle(n.x, n.y, n.r, null, false, true);
+    ctx.fillStyle = 'rgba(8,10,16,.9)'; ctx.font = `${Math.max(9, n.r)}px Inter, system-ui`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    const initials = (n.ref.name||'?').split(/\s+/).map(s=>s[0]).join('').slice(0,3).toUpperCase();
+    ctx.fillText(initials, n.x, n.y+0.5);
+    ctx.restore();
   });
 
-  // hover tooltip
-  if(hoverId){ const n = byId(hoverId); if(n && passFilter(n.ref)) drawTooltip(n); }
-}
-
-function drawNode(n, alpha){
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  // glow
-  ctx.beginPath(); ctx.fillStyle = withAlpha(n.color, 0.18); ctx.arc(n.x,n.y,n.r*2.2,0,Math.PI*2); ctx.fill();
-  // core
-  const ring = n.ref.type==='Greater Eidolon'? 2.5 : 1.5;
-  ctx.beginPath(); ctx.fillStyle = withAlpha(n.color, 0.95); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fill();
-  // ring
-  ctx.lineWidth = ring; ctx.strokeStyle = withAlpha('#cbd5e1', 0.65); ctx.stroke();
-  // initials
-  ctx.fillStyle = 'rgba(8,10,16,.9)'; ctx.font = `${Math.max(9, n.r)}px Inter, system-ui`; ctx.textAlign='center'; ctx.textBaseline='middle';
-  const initials = n.name.split(/\s+/).map(s=>s[0]).join('').slice(0,3).toUpperCase();
-  ctx.fillText(initials, n.x, n.y+0.5);
-  ctx.restore();
-}
-
-function drawTooltip(n){
-  const vx = n.x*scale + offset.x, vy = n.y*scale + offset.y;
-  const pad=8; const text = `${n.name} — ${n.ref.zoneType}`;
-  ctx.setTransform(1,0,0,1,0,0);
-  ctx.font = '12px Inter, system-ui'; const w = Math.ceil(ctx.measureText(text).width)+pad*2;
-  const x = Math.min(Math.max(8, vx - w*0.5), W - w - 8), y = Math.max(44, vy - 26);
-  ctx.fillStyle = '#0f1323f2'; ctx.strokeStyle = '#1c2240'; ctx.lineWidth=1; roundRect(ctx, x,y,w,22,8,true,false);
-  ctx.fillStyle = '#cbd5e1'; ctx.fillText(text, x+pad, y+15);
-}
-
-function drawSpiral(c){
-  c.beginPath();
-  const turns = 6, step=3.4;
-  for(let a=0, r=8; a<Math.PI*turns; a+=0.12){
-    const x = Math.cos(a)*r, y = Math.sin(a)*r; c[a===0?'moveTo':'lineTo'](x,y); r+=step;
+  if(hover){
+    const vx = hover.x*scale + offset.x, vy = hover.y*scale + offset.y;
+    const text = `${hover.ref.name} — ${hover.ref.zoneType || '—'}`;
+    ctx.setTransform(1,0,0,1,0,0); const pad=8;
+    ctx.font = '12px Inter, system-ui';
+    const w = Math.ceil(ctx.measureText(text).width)+pad*2;
+    const x = Math.min(Math.max(8, vx - w*0.5), W - w - 8), y = Math.max(48, vy - 26);
+    rounded(ctx, x,y,w,22,8, '#0f1323f2', '#1c2240');
+    ctx.fillStyle = '#cbd5e1'; ctx.fillText(text, x+pad, y+15);
   }
-  c.stroke();
 }
 
-function pickNode(px,py){
-  // screen -> world
-  const x = (px - offset.x)/scale, y = (py - offset.y)/scale;
-  for(let i=nodes.length-1;i>=0;i--){ const n = nodes[i]; if(!passFilter(n.ref)) continue; const dx=x-n.x,dy=y-n.y; if(dx*dx+dy*dy<=n.r*n.r) return n.id; }
-  return null;
-}
+// interactions
+cv.addEventListener('mousedown', e=>{ dragging=true; last.x=e.clientX; last.y=e.clientY; });
+addEventListener('mouseup', ()=> dragging=false);
+addEventListener('mousemove', e=>{
+  if(dragging){ offset.x += (e.clientX-last.x); offset.y += (e.clientY-last.y); last.x=e.clientX; last.y=e.clientY; }
+  hover = pick(e.clientX, e.clientY);
+});
+addEventListener('wheel', e=>{ const m=Math.exp(-e.deltaY*0.001); zoom(m, e.clientX, e.clientY); });
+addEventListener('click', e=>{
+  const n = pick(e.clientX, e.clientY);
+  if(n && passFilter(n.ref)) openPane(n.ref);
+  else if(e.shiftKey){ scale=1; offset.x=W*0.5; offset.y=H*0.5; }
+});
 
-function byId(id){ return nodes.find(n=>n.id===id); }
+// filters + import/export + reset
+const search = document.getElementById('search');
+const fZone = document.getElementById('filterZone');
+search.oninput = ()=>{}; fZone.onchange = ()=>{};
 
-function passFilter(e){
-  const q = search.value.trim().toLowerCase();
-  if(fType.value && e.type!==fType.value) return false;
-  if(fZone.value && e.zoneType!==fZone.value) return false;
-  if(!q) return true;
-  const blob = [e.name,e.type,e.zoneType,e.power,e.catharsis,e.bio,e.tags,e.rels].join(' \n ').toLowerCase();
-  return blob.includes(q);
-}
+document.getElementById('exportBtn').onclick = ()=> download(JSON.stringify(currentDATA,null,2), 'characters.json', 'application/json');
+document.getElementById('importFile').onchange = ev=>{
+  const f = ev.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const json = JSON.parse(r.result);
+      if(json && Array.isArray(json.entries)){
+        persist(json); build(json);
+      } else alert('Invalid file format: expected {"entries":[...]}');
+    }catch(err){ alert('Import failed: '+err.message); }
+  };
+  r.readAsText(f);
+};
+document.getElementById('resetBtn').onclick = ()=>{ if(confirm('Reset local data to built‑in seeds?')){ persist(SEED); build(SEED); } };
 
-// ---- Pane ----
-const pane = document.getElementById('pane');
+// pane
 function openPane(e){
-  pane.hidden=false;
-  document.getElementById('breadcrumbs').textContent = `${e.type}`;
-  document.getElementById('pName').textContent = e.name;
-  document.getElementById('pMeta').innerHTML = `<span class="pill">Zone: ${e.zoneType||'—'}</span>`;
-  document.getElementById('pPower').textContent = e.power||'—';
-  document.getElementById('pCatharsis').textContent = e.catharsis||'—';
-  document.getElementById('pBio').textContent = e.bio||'—';
-  const rels = (e.rels||'').split('\n').map(x=>x.trim()).filter(Boolean).map(x=>`<span class="tag">${escapeHtml(x)}</span>`).join(' ');
-  document.getElementById('pRels').innerHTML = rels || '—';
-  const tags = (e.tags||'').split(',').map(x=>x.trim()).filter(Boolean).map(x=>`<span class="tag">#${escapeHtml(x)}</span>`).join(' ');
-  document.getElementById('pTags').innerHTML = tags || '—';
+  const pane = document.getElementById('pane');
+  pane.hidden = false;
+  document.getElementById('meta').textContent = e.type || 'Entry';
+  document.getElementById('pName').textContent = e.name || '—';
+  document.getElementById('pZone').textContent = e.zoneType || '—';
+  document.getElementById('pPower').textContent = e.power || '—';
+  document.getElementById('pCath').textContent = e.catharsis || '—';
+  document.getElementById('pBio').textContent = e.bio || '—';
 }
 
-// ---- Utils ----
-function resize(){ W=innerWidth; H=innerHeight; canvas.width=W; canvas.height=H; fx.width=W; fx.height=H; }
-function zoomAt(mult, sx, sy){ const wx=(sx-offset.x)/scale, wy=(sy-offset.y)/scale; scale*=mult; offset.x = sx - wx*scale; offset.y = sy - wy*scale; }
-function rand(a,b){ return a + Math.random()*(b-a); }
-function withAlpha(col, a){ if(typeof col==='number'){ const r=(col>>16)&255,g=(col>>8)&255,b=col&255; return `rgba(${r},${g},${b},${a})`; } return col.replace(')',`, ${a})`).replace('rgb(','rgba('); }
-function roundRect(c,x,y,w,h,r,fill,stroke){ if(typeof r==='number') r={tl:r,tr:r,br:r,bl:r}; c.beginPath(); c.moveTo(x+r.tl,y); c.lineTo(x+w-r.tr,y); c.quadraticCurveTo(x+w,y,x+w,y+r.tr); c.lineTo(x+w,y+h-r.br); c.quadraticCurveTo(x+w,y+h,x+w-r.br,y+h); c.lineTo(x+r.bl,y+h); c.quadraticCurveTo(x,y+h,x,y+h-r.bl); c.lineTo(x,y+r.tl); c.quadraticCurveTo(x,y,x+r.tl,y); if(fill) c.fill(); if(stroke) c.stroke(); }
-function getCSS(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+// helpers
+function E(name,type,zoneType,power,catharsis,bio){ return { id: uid(), name, type, zoneType, power, catharsis, bio }; }
+function persist(data){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch(e){} }
+function loadLocal(){ try{ const s = localStorage.getItem(STORAGE_KEY); if(!s) return null; const j=JSON.parse(s); if(j && Array.isArray(j.entries)) return j; }catch(e){} return null; }
+function pick(px,py){ const x = (px - offset.x)/scale, y = (py - offset.y)/scale; for(let i=nodes.length-1;i>=0;i--){ const n=nodes[i]; if(!passFilter(n.ref)) continue; const dx=x-n.x, dy=y-n.y; if(dx*dx+dy*dy<=n.r*n.r) return n; } return null; }
+function passFilter(e){ const q=(search.value||'').toLowerCase(); if(fZone.value && e.zoneType!==fZone.value) return false; if(!q) return true; return [e.name,e.type,e.zoneType,e.power,e.catharsis,e.bio].join(' ').toLowerCase().includes(q); }
+function resize(){ W=innerWidth; H=innerHeight; bg.width=W; bg.height=H; cv.width=W; cv.height=H; }
+function orb(c,x,y,r,a,b){ const g=c.createRadialGradient(x,y,0,x,y,r); g.addColorStop(0,a); g.addColorStop(1,b); c.fillStyle=g; c.beginPath(); c.arc(x,y,r,0,Math.PI*2); c.fill(); }
+function circle(x,y,r,fill,doFill,doStroke){ ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); if(doFill && fill){ ctx.fillStyle=fill; ctx.fill(); } if(doStroke){ ctx.stroke(); } }
+function rounded(c,x,y,w,h,r,fill,stroke){ c.fillStyle=fill; c.strokeStyle=stroke; c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); c.fill(); c.stroke(); }
+function zoom(mult, sx, sy){ const wx=(sx-offset.x)/scale, wy=(sy-offset.y)/scale; scale*=mult; offset.x = sx - wx*scale; offset.y = sy - wy*scale; }
+function rgba(col,a){ if(typeof col==='number'){ const r=(col>>16)&255,g=(col>>8)&255,b=col&255; return `rgba(${r},${g},${b},${a})`; } if(col.startsWith('#')){ const v=parseInt(col.slice(1),16); const r=(v>>16)&255,g=(v>>8)&255,b=v&255; return `rgba(${r},${g},${b},${a})`; } return col.replace(')',`, ${a})`).replace('rgb(','rgba('); }
+function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
 function uid(){ return Math.random().toString(36).slice(2,10); }
-function escapeHtml(str){ return String(str||'').replace(/[&<>\"]/g, s=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[s])); }
 </script>
 </body>
 </html>
